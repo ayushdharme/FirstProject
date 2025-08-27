@@ -21,11 +21,11 @@ app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
 
-async function main(){
+async function connectToDb(){
     await mongoose.connect(MONGO_URL);
 };
 
-main().then((res)=>{
+connectToDb().then((res)=>{
     console.log("database connection establish");
     // console.log(res);
 }).catch((err)=>{
@@ -48,7 +48,7 @@ app.get("/listing",wrapAsync(async (req,res)=>{
     res.render("./listings/index",{allListings});
 }));
 
-//new show form 
+//new show form
 app.get("/listing/new",(req,res)=>{
     res.render("./listings/new");
 });
@@ -73,7 +73,7 @@ app.post("/listing",wrapAsync(async (req,res,next)=>{
 }));
 
 
-//edit routes(indivisual) for showing the edit form 
+//edit routes(indivisual) for showing the edit form
 app.get("/listing/:id/edit",wrapAsync(async (req,res,next)=>{
 
     let {id} = req.params;
@@ -127,7 +127,15 @@ app.delete("/listing/:id", wrapAsync(async(req,res)=>{
 
 }));
 
-app.all("*",(req,res,next)=>{
+// There is a problem with express 5+, it's using path-to-regexp library, and they changed the rules.
+//
+// Instead of using:
+//
+// .get('/**', xxxx) / .get('/*', xxxx)
+// Use this workaround:
+//
+// .get('/*\w', xxxx)
+app.all(/(.*)/,(req,res,next)=>{
     next(new ExpressError(404,"page not found"));
 });
 
