@@ -15,11 +15,14 @@ connectToDb().then((res)=>{
     console.log(err);
 })
 
-
+//initializing the database with listings
 const initDB = async ()=>{
     //deleting the existing data
     await listing.deleteMany({});
+
     //inserting a new data
+    initdata.data = initdata.data.map((obj)=>({...obj,owner:"68bd542a10ddf6314023dce4"}));
+    console.log(initdata.data);
     await listing.insertMany(initdata.data);
     console.log("data was initialize");
 }

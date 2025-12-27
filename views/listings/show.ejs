@@ -1,31 +1,128 @@
 <% layout("/layouts/boilerplate") -%>
 
 <div class="row mt-4">
+
     <div class="col-8 offset-3 mb-3">
-        <h3>Listing Details</h3>
+        <h3><%=data.title%></h3>
     </div>
-    <div class="card col-6 offset-3">
-        <img src="<%=data.image.url%>" class="card-img-top show-img" alt="listing_img">
+
+    <div class="card col-6 offset-3 listing-card">
+
+        <img src="<%=data.image%>" class="card-img-top show-img" alt="listing_img">
+
         <div class="card-body mt-3">
             <p class="card-text">
-                <b><%=data.title%></b> <br> <br>
+                <b>Owner:</b> <%=data.owner.username%> <br> <br>
                 <b>Description:</b> <%=data.description%> <br> <br>
                 <b>Price:</b> ₹<%=data.price.toLocaleString("en-IN")%> /Night <br><br>
                 <b>Location:</b> <%=data.location%> <br><br>
                 <b>Country:</b> <%=data.country%> <br><br>
             </p>
         </div>
+        <% if (currentUser && currentUser._id.toString() === data.owner._id.toString()) { %>
 
-        <div class="btns">
-            <a href="/listing/<%=data._id%>/edit" class="btn btn-dark offset-4">Edit</a>
+            <div class="btns pb-2">
+                <a href="/listing/<%=data._id%>/edit" class="btn btn-dark offset-4">Edit</a>
+                
+                <form method="POST" action="/listing/<%=data._id%>?_method=DELETE">
+                    <button class="btn btn-dark  offset-3" type="submit">Delete</button>
+                </form>
+            </div>
+         <%}%>
         
-            <form method="POST" action="/listing/<%=data._id%>?_method=DELETE">
-                <button class="btn btn-dark  offset-3" type="submit">Delete</button>
+        
+        <div class="col-8 mb-3 mt-4">
+            <% if(currentUser){ %>
+            <h4>Leave A Rating</h4>
+            <form method="POST" action="/listing/<%= data._id %>/review" novalidate class="needs-validation">
+
+                <label for="rating" class="form-label">Rating</label>
+                <input type="range" id="rating" name="rating" min="1" max="5" class="form-range">
+                <br>
+                <label for="comment" class="form-label">Comment:</label>
+                <br>
+                <textarea
+                 name="comment"
+                 id="comment"
+                 rows="5"
+                 cols="100"
+                 class="form-control"
+                 required></textarea>
+                 <div class="invalid-feedback">
+                    Please add some comment.
+                </div>
+                 
+                <br>
+
+                <button type="submit" class="btn btn-dark">Submit</button>
             </form>
+            <% } %>
+            
+            <% if(data.reviews.length >0) { %>
+            <hr>
+            <div class="row">
+                <h4>All Ratings</h4>
+                <% for(let rev of data.reviews) {%>
+                    <div class="card mt-3">
+                        
+                        <div class="card-body mt-3">
+                            <h5 class="card-title"><%=rev.author.username%></h5>
+                            <p class="card-text"><%= rev.comment %></p>
+                            <p class="card-text"><%= rev.rating %> Stars</p>
+                            <form method="POST" action="/listing/<%= data._id %>/review/<%= rev._id %>?_method=delete"  >
+                                <button type="submit" class="mb-3 btn btn-dark">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                <%}%>
+            </div>
+            <% } %>
+
         </div>
 
     </div>
+
+    <div class="col-8 offset-3 mb-3">
+        <h3>Where You'll Be</h3>  
+        <div id="map"></div>              
+    </div>
+
 </div>
+
+<script>
+    const listing = <%- JSON.stringify(data) %>;
+    const lat = listing.coordinates.coordinates[1]; 
+    const lng = listing.coordinates.coordinates[0];
+  (g=>{var h,a,k,p="The Google Maps JavaScript API",
+  c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});
+  var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>
+  {
+    await (a=m.createElement("script"));e.set("libraries",[...r]+"");
+    for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);
+    a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;
+    a.onerror=()=>h=n(Error(p+" could not load."));
+    a.nonce=m.querySelector("script[nonce]")?.nonce||"";
+    m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+    key: "<%=process.env.MAP_API_KEY%>",
+    v: "weekly",
+  });
+    let map;
+
+    async function initMap() {
+    const { Map } = await google.maps.importLibrary("maps");
+    map = new Map(document.getElementById("map"), {
+        center: {lat:lat,lng: lng},
+        zoom: 17,
+    });
+    new google.maps.Marker({
+          position: {lat,lng},
+          map: map,
+          title:"Exact Location Will Show After Booking "// optional: shows on hover
+      });
+    }
+
+    initMap();
+</script>
 
 
 

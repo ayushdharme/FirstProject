@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const review = require("./reviews");
 const schema = mongoose.Schema;
 
 
@@ -28,11 +29,38 @@ const listingSchema = new schema({
     country:{
         type:String,
         required:true
+    },
+    reviews:[
+        {
+            type:schema.Types.ObjectId,
+            ref:"review"
+        }
+    ],
+    owner:{
+        type:schema.Types.ObjectId,
+        ref:"user"
+    },
+    coordinates: {
+        type: {
+            type: String,
+            enum: ["Point"],
+            required: true,
+            default: "Point"
+        },
+        coordinates: {
+            type: [Number], // [longitude, latitude]
+            required: true
+        }
     }
-})
+});
 
+//deleting all the reviews associated with the listing
+//which is deleted
+listingSchema.post("findOneAndDelete",async(list)=>{
+    if(list){
+        await review.deleteMany({_id:{$in:list.reviews}})
+    }
+});
 
 const listing = mongoose.model("listing",listingSchema);
-
-
 module.exports = listing;
